@@ -36,6 +36,10 @@ export default function Home({ todos, error = false }) {
 	}, []);
 
 	useEffect(() => {
+		return () => {};
+	}, []);
+
+	useEffect(() => {
 		if (editModeIndex) document.getElementById(editModeIndex).focus();
 	}, [editModeIndex]);
 
@@ -49,7 +53,7 @@ export default function Home({ todos, error = false }) {
 		if (editTodoError) setEditTodoError(false);
 	};
 
-	const handleAddTodo = e => {
+	const handleAddTodo = async e => {
 		// e.preventDefault();
 		if (e.key !== 'Enter') return;
 
@@ -65,7 +69,20 @@ export default function Home({ todos, error = false }) {
 			return;
 		}
 
-		const newTodo = { _id: Math.random(), title: value };
+		const newTodo = await fetch('/api/todos/add', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				title: value,
+			}),
+		})
+			.then(res => res.json())
+			.then(({ todo }) => todo)
+			.catch(err => console.log('ERROR ADD TODO: ', err));
+
+		console.log('NEW TODO: ', newTodo);
 		setTodosList([...todosList, newTodo]);
 		document.getElementById('input-new-todo').value = '';
 	};
@@ -112,7 +129,21 @@ export default function Home({ todos, error = false }) {
 		setEditModeIndex(null);
 	};
 
-	const handleDeleteTodo = id => {
+	const handleDeleteTodo = async id => {
+		const deleteSuccessful = await fetch('/api/todos/delete', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				_id: id,
+			}),
+		})
+			.then(res => res.json())
+			.then(({ todo }) => todo.deletedCount > 0)
+			.catch(err => console.log('ERROR DEL TODO: ', err));
+
+		console.log('DELETE SUCCESFUL: ', deleteSuccessful);
 		setTodosList(todosList.filter(todo => todo._id !== id));
 	};
 
