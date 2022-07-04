@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { connectToDatabase } from '../lib/mongodb';
 import {
 	Center,
@@ -15,25 +15,44 @@ import Alert from '../components/Alert';
 import { FiEdit, FiTrash } from 'react-icons/fi';
 
 export default function Home({ todos, error = false }) {
+	console.log('TODOS: ', todos);
 	const [todosList, setTodosList] = useState(todos);
-	const [inputError, setInputError] = useState(false);
+	const [newTodoError, setNewTodoError] = useState(false);
+	const [editTodoError, setEditTodoError] = useState(false);
+	const [editModeIndex, setEditModeIndex] = useState(null);
 
 	// hooks
-	const inputRef = useRef();
+	const inputNewRef = useRef();
+	const inputEditRef = useRef();
 	const toast = useToast();
 
-	const handleInputChange = e => {
+	useEffect(() => {
+		window.addEventListener('keydown', e =>
+			e.key === 'Escape' || 'Enter' ? setEditModeIndex(null) : null
+		);
+	}, []);
+
+	useEffect(() => {
+		if (editModeIndex) document.getElementById(editModeIndex).focus();
+	}, [editModeIndex]);
+
+	const handleChangeNewTodo = e => {
 		e.preventDefault();
-		if (inputError) setInputError(false);
+		if (newTodoError) setNewTodoError(false);
+	};
+
+	const handleChangeEditTodo = e => {
+		e.preventDefault();
+		if (editTodoError) setEditTodoError(false);
 	};
 
 	const handleAddTodo = e => {
 		// e.preventDefault();
 		if (e.key !== 'Enter') return;
 
-		const newTodo = { title: e.target.value };
-		if (newTodo.title === '') {
-			setInputError(true);
+		const { value } = e.target;
+		if (value === '') {
+			setNewTodoError(true);
 			toast({
 				position: 'top',
 				render: () => (
@@ -42,17 +61,71 @@ export default function Home({ todos, error = false }) {
 			});
 			return;
 		}
+
+		const newTodo = { _id: Math.random(), title: value };
 		setTodosList([...todosList, newTodo]);
+		document.getElementById('input-new-todo').value = '';
 	};
 
-	const handleEditTodo = e => {};
-	const handleDeleteTodo = e => {};
+	const handleEditTodo = (e, todo) => {
+		// e.preventDefault();
+		if (e.key === 'Escape') {
+			setEditModeIndex(null);
+			return;
+		}
+
+		if (e.key !== 'Enter') return;
+
+		const { value } = e.target;
+		if (value === '') {
+			setEditTodoError(true);
+			toast({
+				position: 'top',
+				render: () => (
+					<Alert status='error' message='Enter some text first!' />
+				),
+			});
+			return;
+		}
+
+		if (value === todo.title) {
+			setEditModeIndex(null);
+			return;
+		}
+
+		const editTodoIndex = todosList.findIndex(t => t._id === todo._id);
+		const updatedTodosList = todosList;
+		updatedTodosList[editTodoIndex] = {
+			...updatedTodosList[editTodoIndex],
+			title: value,
+		};
+
+		// const updatedTodosList = todosList.map(todo => {
+		// 	return todo._id === id ?
+		// 	{ ...todo, title: value} : todo
+		// })
+
+		setTodosList(updatedTodosList);
+		setEditModeIndex(null);
+	};
+
+	const handleDeleteTodo = id => {
+		setTodosList(todosList.filter(todo => todo._id !== id));
+	};
+
+	const toggleEditMode = id => {
+		if (editModeIndex === id) {
+			setEditModeIndex(null);
+		} else {
+			setEditModeIndex(id);
+		}
+	};
 
 	return (
-		<Page title={'Just like Paper'} pt={10} bg={'gray.100'}>
-			<Center flexDir={'column'} h='100%'>
-				<Heading textAlign={'center'} mb={5}>
-					Paper.
+		<Page title={'Just like Paper'} bg={'white'} bgImage={'/paper.jpg'}>
+			<Center flexDir={'column'} h='100%' my={20}>
+				<Heading textAlign={'center'} mb={10}>
+					Paper. {editModeIndex}
 				</Heading>
 				{error && (
 					<Alert status={'error'} message={'Something went wrong.'} />
@@ -64,7 +137,7 @@ export default function Home({ todos, error = false }) {
 						w={'800px'}
 						m={'auto'}
 						p={10}
-						bg={'gray.200'}
+						bg={'gray.50'}
 						boxShadow={'lg'}>
 						<HStack
 							mb={4}
@@ -73,18 +146,18 @@ export default function Home({ todos, error = false }) {
 							justify={'space-between'}
 							_hover={{ bg: 'gray.300' }}>
 							<Input
-								ref={inputRef}
-								// value={inputValue}
-								isInvalid={inputError}
+								id={'input-new-todo'}
+								ref={inputNewRef}
+								isInvalid={newTodoError}
 								placeholder='New todo'
 								bg={'white'}
-								onChange={handleInputChange}
+								onChange={handleChangeNewTodo}
 								onKeyDown={handleAddTodo}
 							/>
 						</HStack>
-						{todosList.map(t => (
+						{todosList.map(todo => (
 							<HStack
-								key={t.title}
+								key={todo._id}
 								mb={2}
 								p={3}
 								w={'100%'}
@@ -93,10 +166,25 @@ export default function Home({ todos, error = false }) {
 								borderColor={'gray.300'}
 								justify={'space-between'}
 								_hover={{ bg: 'gray.300' }}>
-								<Text>{t.title}</Text>
+								{editModeIndex === todo._id ? (
+									<Input
+										id={todo._id}
+										ref={inputEditRef}
+										isInvalid={editTodoError}
+										h={'150%'}
+										p={0}
+										bg={'white'}
+										border={'none'}
+										defaultValue={todo.title}
+										onChange={handleChangeEditTodo}
+										onKeyDown={e => handleEditTodo(e, todo)}
+									/>
+								) : (
+									<Text>{todo.title}</Text>
+								)}
 								<HStack>
 									<Icon
-										onClick={handleEditTodo}
+										onClick={() => toggleEditMode(todo._id)}
 										as={FiEdit}
 										mr={2}
 										w={6}
@@ -104,7 +192,9 @@ export default function Home({ todos, error = false }) {
 										color={'gray.400'}
 									/>
 									<Icon
-										onClick={handleDeleteTodo}
+										onClick={() =>
+											handleDeleteTodo(todo._id)
+										}
 										as={FiTrash}
 										mr={2}
 										w={6}

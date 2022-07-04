@@ -18,7 +18,7 @@ export default function Page({ title, children, ...rest }) {
 			<Box
 				w={'full'}
 				h={'100px'}
-				bg={'gray.100'}
+				bg={'white'}
 				justifySelf='flex-end'></Box>
 		</Flex>
 	);
