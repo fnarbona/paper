@@ -14,8 +14,10 @@ import Page from '../components/Page';
 import Alert from '../components/Alert';
 import { FiEdit, FiTrash } from 'react-icons/fi';
 
+import Todo from '../models/todoModel';
+
 export default function Home({ todos, error = false }) {
-	console.log('TODOS: ', todos);
+	// console.log('TODOS: ', todos);
 	const [todosList, setTodosList] = useState(todos);
 	const [newTodoError, setNewTodoError] = useState(false);
 	const [editTodoError, setEditTodoError] = useState(false);
@@ -27,9 +29,10 @@ export default function Home({ todos, error = false }) {
 	const toast = useToast();
 
 	useEffect(() => {
-		window.addEventListener('keydown', e =>
-			e.key === 'Escape' || 'Enter' ? setEditModeIndex(null) : null
-		);
+		window.addEventListener('keydown', e => {
+			if (e.key === 'Escape' || e.key === 'Enter') setEditModeIndex(null);
+		});
+		return () => window.removeEventListener('keydown');
 	}, []);
 
 	useEffect(() => {
@@ -213,9 +216,10 @@ export default function Home({ todos, error = false }) {
 
 export async function getServerSideProps() {
 	try {
-		const { db } = await connectToDatabase();
+		const client = await connectToDatabase();
 
-		const todos = await db.collection('todos').find({}).limit(20).toArray();
+		// const todos = await db.collection('todos').find({}).limit(20).toArray();
+		const todos = await Todo.find();
 
 		console.log('TODOS: ', todos ? true : false);
 		return {
