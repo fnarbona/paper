@@ -1,7 +1,7 @@
 import { connectToDatabase } from '../../../lib/mongodb';
 import Todo from '../../../models/todoModel';
 
-export default async function addTest(req, res) {
+export default async function addTodo(req, res) {
 	try {
 		console.log('CONNECTING TO MONGO');
 		await connectToDatabase();

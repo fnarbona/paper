@@ -83,11 +83,24 @@ export default function Home({ todos, error = false }) {
 			.catch(err => console.log('ERROR ADD TODO: ', err));
 
 		console.log('NEW TODO: ', newTodo);
-		setTodosList([...todosList, newTodo]);
+
+		if (newTodo) {
+			setTodosList([...todosList, newTodo]);
+		} else {
+			toast({
+				position: 'top',
+				render: () => (
+					<Alert
+						status='error'
+						message='Something went wrong, please try again!'
+					/>
+				),
+			});
+		}
 		document.getElementById('input-new-todo').value = '';
 	};
 
-	const handleEditTodo = (e, todo) => {
+	const handleEditTodo = async (e, todo) => {
 		// e.preventDefault();
 		if (e.key === 'Escape') {
 			setEditModeIndex(null);
@@ -113,19 +126,45 @@ export default function Home({ todos, error = false }) {
 			return;
 		}
 
-		const editTodoIndex = todosList.findIndex(t => t._id === todo._id);
-		const updatedTodosList = todosList;
-		updatedTodosList[editTodoIndex] = {
-			...updatedTodosList[editTodoIndex],
-			title: value,
-		};
+		const updatedTodo = await fetch('/api/todos/edit', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				_id: todo._id,
+				update: { title: value },
+			}),
+		})
+			.then(res => res.json())
+			.then(({ todo }) => todo)
+			.catch(err => console.log('ERROR UPDATE TODO: ', err));
 
-		// const updatedTodosList = todosList.map(todo => {
-		// 	return todo._id === id ?
-		// 	{ ...todo, title: value} : todo
-		// })
+		console.log('UPDATE SUCCESFUL: ', updatedTodo);
 
-		setTodosList(updatedTodosList);
+		if (updatedTodo) {
+			const editTodoIndex = todosList.findIndex(t => t._id === todo._id);
+			// (?) for some reason the code commented below doesn't work (?)
+			// const updatedTodosList = todosList;
+			// updatedTodosList[editTodoIndex] = updatedTodo;
+
+			setTodosList([
+				...todosList.slice(0, editTodoIndex),
+				updatedTodo,
+				...todosList.slice(editTodoIndex + 1),
+			]);
+		} else {
+			toast({
+				position: 'top',
+				render: () => (
+					<Alert
+						status='error'
+						message='Something went wrong, please try again!'
+					/>
+				),
+			});
+		}
+
 		setEditModeIndex(null);
 	};
 
@@ -141,10 +180,22 @@ export default function Home({ todos, error = false }) {
 		})
 			.then(res => res.json())
 			.then(({ todo }) => todo.deletedCount > 0)
-			.catch(err => console.log('ERROR DEL TODO: ', err));
+			.catch(err => console.log('ERROR DELETE TODO: ', err));
 
-		console.log('DELETE SUCCESFUL: ', deleteSuccessful);
-		setTodosList(todosList.filter(todo => todo._id !== id));
+		// console.log('DELETE SUCCESFUL: ', deleteSuccessful);
+		if (deleteSuccessful) {
+			setTodosList(todosList.filter(todo => todo._id !== id));
+		} else {
+			toast({
+				position: 'top',
+				render: () => (
+					<Alert
+						status='error'
+						message='Something went wrong, please try again!'
+					/>
+				),
+			});
+		}
 	};
 
 	const toggleEditMode = id => {
@@ -157,7 +208,7 @@ export default function Home({ todos, error = false }) {
 
 	return (
 		<Page title={'Just like Paper'} bg={'white'} bgImage={'/paper.jpg'}>
-			<Center flexDir={'column'} h='100%' my={20}>
+			<Center flexDir={'column'} h='100%' mt={10} mb={20}>
 				<Heading textAlign={'center'} mb={10}>
 					Paper. {editModeIndex}
 				</Heading>

@@ -1,4 +1,4 @@
-import { Box, Flex, HStack, Text } from '@chakra-ui/react';
+import { Box, Flex } from '@chakra-ui/react';
 import Head from 'next/head';
 
 export default function Page({ title, children, ...rest }) {
@@ -15,9 +15,11 @@ export default function Page({ title, children, ...rest }) {
 
 			<main>{children}</main>
 
-			<HStack w={'full'} h={'60px'} bg={'white'} justifySelf='flex-end'>
-				<Text m='auto'>Made with a passion for simplicity</Text>
-			</HStack>
+			{/* <Box
+				w={'full'}
+				h={'100px'}
+				bg={'white'}
+				justifySelf='flex-end'></Box> */}
 		</Flex>
 	);
 }
