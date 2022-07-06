@@ -14,8 +14,10 @@ import Page from '../components/Page';
 import Alert from '../components/Alert';
 import { FiEdit, FiTrash } from 'react-icons/fi';
 
+import Todo from '../models/todoModel';
+
 export default function Home({ todos, error = false }) {
-	console.log('TODOS: ', todos);
+	// console.log('TODOS: ', todos);
 	const [todosList, setTodosList] = useState(todos);
 	const [newTodoError, setNewTodoError] = useState(false);
 	const [editTodoError, setEditTodoError] = useState(false);
@@ -27,9 +29,14 @@ export default function Home({ todos, error = false }) {
 	const toast = useToast();
 
 	useEffect(() => {
-		window.addEventListener('keydown', e =>
-			e.key === 'Escape' || 'Enter' ? setEditModeIndex(null) : null
-		);
+		window.addEventListener('keydown', e => {
+			if (e.key === 'Escape' || e.key === 'Enter') setEditModeIndex(null);
+		});
+		return () => window.removeEventListener('keydown');
+	}, []);
+
+	useEffect(() => {
+		return () => {};
 	}, []);
 
 	useEffect(() => {
@@ -46,7 +53,7 @@ export default function Home({ todos, error = false }) {
 		if (editTodoError) setEditTodoError(false);
 	};
 
-	const handleAddTodo = e => {
+	const handleAddTodo = async e => {
 		// e.preventDefault();
 		if (e.key !== 'Enter') return;
 
@@ -62,12 +69,38 @@ export default function Home({ todos, error = false }) {
 			return;
 		}
 
-		const newTodo = { _id: Math.random(), title: value };
-		setTodosList([...todosList, newTodo]);
+		const newTodo = await fetch('/api/todos/add', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				title: value,
+			}),
+		})
+			.then(res => res.json())
+			.then(({ todo }) => todo)
+			.catch(err => console.log('ERROR ADD TODO: ', err));
+
+		console.log('NEW TODO: ', newTodo);
+
+		if (newTodo) {
+			setTodosList([...todosList, newTodo]);
+		} else {
+			toast({
+				position: 'top',
+				render: () => (
+					<Alert
+						status='error'
+						message='Something went wrong, please try again!'
+					/>
+				),
+			});
+		}
 		document.getElementById('input-new-todo').value = '';
 	};
 
-	const handleEditTodo = (e, todo) => {
+	const handleEditTodo = async (e, todo) => {
 		// e.preventDefault();
 		if (e.key === 'Escape') {
 			setEditModeIndex(null);
@@ -93,24 +126,76 @@ export default function Home({ todos, error = false }) {
 			return;
 		}
 
-		const editTodoIndex = todosList.findIndex(t => t._id === todo._id);
-		const updatedTodosList = todosList;
-		updatedTodosList[editTodoIndex] = {
-			...updatedTodosList[editTodoIndex],
-			title: value,
-		};
+		const updatedTodo = await fetch('/api/todos/edit', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				_id: todo._id,
+				update: { title: value },
+			}),
+		})
+			.then(res => res.json())
+			.then(({ todo }) => todo)
+			.catch(err => console.log('ERROR UPDATE TODO: ', err));
 
-		// const updatedTodosList = todosList.map(todo => {
-		// 	return todo._id === id ?
-		// 	{ ...todo, title: value} : todo
-		// })
+		console.log('UPDATE SUCCESFUL: ', updatedTodo);
 
-		setTodosList(updatedTodosList);
+		if (updatedTodo) {
+			const editTodoIndex = todosList.findIndex(t => t._id === todo._id);
+			// (?) for some reason the code commented below doesn't work (?)
+			// const updatedTodosList = todosList;
+			// updatedTodosList[editTodoIndex] = updatedTodo;
+
+			setTodosList([
+				...todosList.slice(0, editTodoIndex),
+				updatedTodo,
+				...todosList.slice(editTodoIndex + 1),
+			]);
+		} else {
+			toast({
+				position: 'top',
+				render: () => (
+					<Alert
+						status='error'
+						message='Something went wrong, please try again!'
+					/>
+				),
+			});
+		}
+
 		setEditModeIndex(null);
 	};
 
-	const handleDeleteTodo = id => {
-		setTodosList(todosList.filter(todo => todo._id !== id));
+	const handleDeleteTodo = async id => {
+		const deleteSuccessful = await fetch('/api/todos/delete', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				_id: id,
+			}),
+		})
+			.then(res => res.json())
+			.then(({ todo }) => todo.deletedCount > 0)
+			.catch(err => console.log('ERROR DELETE TODO: ', err));
+
+		// console.log('DELETE SUCCESFUL: ', deleteSuccessful);
+		if (deleteSuccessful) {
+			setTodosList(todosList.filter(todo => todo._id !== id));
+		} else {
+			toast({
+				position: 'top',
+				render: () => (
+					<Alert
+						status='error'
+						message='Something went wrong, please try again!'
+					/>
+				),
+			});
+		}
 	};
 
 	const toggleEditMode = id => {
@@ -123,7 +208,7 @@ export default function Home({ todos, error = false }) {
 
 	return (
 		<Page title={'Just like Paper'} bg={'white'} bgImage={'/paper.jpg'}>
-			<Center flexDir={'column'} h='100%' my={20}>
+			<Center flexDir={'column'} h='100%' mt={10} mb={20}>
 				<Heading textAlign={'center'} mb={10}>
 					Paper. {editModeIndex}
 				</Heading>
@@ -213,9 +298,10 @@ export default function Home({ todos, error = false }) {
 
 export async function getServerSideProps() {
 	try {
-		const { db } = await connectToDatabase();
+		const client = await connectToDatabase();
 
-		const todos = await db.collection('todos').find({}).limit(20).toArray();
+		// const todos = await db.collection('todos').find({}).limit(20).toArray();
+		const todos = await Todo.find();
 
 		console.log('TODOS: ', todos ? true : false);
 		return {

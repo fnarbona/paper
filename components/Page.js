@@ -15,11 +15,11 @@ export default function Page({ title, children, ...rest }) {
 
 			<main>{children}</main>
 
-			<Box
+			{/* <Box
 				w={'full'}
 				h={'100px'}
 				bg={'white'}
-				justifySelf='flex-end'></Box>
+				justifySelf='flex-end'></Box> */}
 		</Flex>
 	);
 }
