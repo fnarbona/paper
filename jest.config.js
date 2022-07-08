@@ -13,6 +13,17 @@ const customJestConfig = {
 	// if using TypeScript with a baseUrl set to the root directory then you need the below for alias' to work
 	moduleDirectories: ['node_modules', '<rootDir>/'],
 	testEnvironment: 'jest-environment-jsdom',
+	// modulePathIgnorePatterns: ['<rootDir>/lib/*'],
+	// testPathIgnorePatterns: ['<rootDir>/lib/*'],
+	coveragePathIgnorePatterns: ['<rootDir>/lib/*'],
+	// coverageThreshold: {
+	// 	global: {
+	// 		branches: 20,
+	// 		functions: 30,
+	// 		lines: 50,
+	// 		statements: 50,
+	// 	},
+	// },
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

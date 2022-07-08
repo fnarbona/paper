@@ -42,7 +42,8 @@ export default function Home({ todos, error = false }) {
 	}, []);
 
 	useEffect(() => {
-		if (editModeIndex) document.getElementById(editModeIndex).focus();
+		if (editModeIndex)
+			document.getElementById(`input-edit-${editModeIndex}`).focus();
 	}, [editModeIndex]);
 
 	const handleChangeNewTodo = e => {
@@ -238,6 +239,7 @@ export default function Home({ todos, error = false }) {
 							_hover={{ bg: 'gray.300' }}>
 							<Input
 								id={'input-new-todo'}
+								data-testid={'input-new-todo'}
 								ref={inputNewRef}
 								isInvalid={newTodoError}
 								placeholder='New todo'
@@ -259,7 +261,8 @@ export default function Home({ todos, error = false }) {
 								_hover={{ bg: 'gray.300' }}>
 								{editModeIndex === todo._id ? (
 									<Input
-										id={todo._id}
+										id={`input-edit-${todo._id}`}
+										data-testid={`input-edit-${todo._id}`}
 										ref={inputEditRef}
 										isInvalid={editTodoError}
 										h={'150%'}
@@ -275,6 +278,7 @@ export default function Home({ todos, error = false }) {
 								)}
 								<HStack>
 									<Icon
+										data-testid={`icon-edit-${todo._id}`}
 										onClick={() => toggleEditMode(todo._id)}
 										as={FiEdit}
 										mr={2}
@@ -283,6 +287,7 @@ export default function Home({ todos, error = false }) {
 										color={'gray.400'}
 									/>
 									<Icon
+										data-testid={`icon-delete-${todo._id}`}
 										onClick={() =>
 											handleDeleteTodo(todo._id)
 										}

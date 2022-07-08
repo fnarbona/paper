@@ -1,11 +1,11 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import Home from '../../pages/index';
 import '@testing-library/jest-dom';
 
 const mockTodosList = [
-	{ _id: Math.random() * 100000, title: 'test todo' },
-	{ _id: Math.random() * 100000, title: 'test todo' },
-	{ _id: Math.random() * 100000, title: 'test todo' },
+	{ _id: '123', title: 'test todo' },
+	{ _id: '456', title: 'test todo' },
+	{ _id: '789', title: 'test todo' },
 ];
 
 describe('Home', () => {
@@ -44,4 +44,10 @@ describe('Home', () => {
 
 		expect(alert).toBeDefined();
 	});
+
+	todo('enters edit mode for a todo', () => {});
+	todo('exits edit mode before saving changes for todo', () => {});
+	todo('saves edits made to todo', () => {});
+	todo('deletes todo', () => {});
+	todo('adds todo', () => {});
 });
