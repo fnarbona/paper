@@ -29,10 +29,12 @@ export default function Home({ todos, error = false }) {
 	const toast = useToast();
 
 	useEffect(() => {
-		window.addEventListener('keydown', e => {
+		const escapeEditMode = e => {
 			if (e.key === 'Escape' || e.key === 'Enter') setEditModeIndex(null);
-		});
-		return () => window.removeEventListener('keydown');
+		};
+
+		window.addEventListener('keydown', escapeEditMode);
+		return () => window.removeEventListener('keydown', escapeEditMode);
 	}, []);
 
 	useEffect(() => {
@@ -210,10 +212,14 @@ export default function Home({ todos, error = false }) {
 		<Page title={'Just like Paper'} bg={'white'} bgImage={'/paper.jpg'}>
 			<Center flexDir={'column'} h='100%' mt={10} mb={20}>
 				<Heading textAlign={'center'} mb={10}>
-					Paper. {editModeIndex}
+					Paper.
 				</Heading>
 				{error && (
-					<Alert status={'error'} message={'Something went wrong.'} />
+					<Alert
+						data-testid={'alert-error'}
+						status={'error'}
+						message={'Something went wrong.'}
+					/>
 				)}
 				{!error && (
 					<VStack
