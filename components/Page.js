@@ -13,7 +13,7 @@ export default function Page({ title, children, ...rest }) {
 				<link rel='icon' href='/favicon.ico' />
 			</Head>
 
-			<main>{children}</main>
+			<main data-testid={'main-container'}>{children}</main>
 
 			{/* <Box
 				w={'full'}

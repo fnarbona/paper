@@ -29,10 +29,12 @@ export default function Home({ todos, error = false }) {
 	const toast = useToast();
 
 	useEffect(() => {
-		window.addEventListener('keydown', e => {
+		const escapeEditMode = e => {
 			if (e.key === 'Escape' || e.key === 'Enter') setEditModeIndex(null);
-		});
-		return () => window.removeEventListener('keydown');
+		};
+
+		window.addEventListener('keydown', escapeEditMode);
+		return () => window.removeEventListener('keydown', escapeEditMode);
 	}, []);
 
 	useEffect(() => {
@@ -40,7 +42,8 @@ export default function Home({ todos, error = false }) {
 	}, []);
 
 	useEffect(() => {
-		if (editModeIndex) document.getElementById(editModeIndex).focus();
+		if (editModeIndex)
+			document.getElementById(`input-edit-${editModeIndex}`).focus();
 	}, [editModeIndex]);
 
 	const handleChangeNewTodo = e => {
@@ -169,18 +172,24 @@ export default function Home({ todos, error = false }) {
 	};
 
 	const handleDeleteTodo = async id => {
-		const deleteSuccessful = await fetch('/api/todos/delete', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				_id: id,
-			}),
-		})
-			.then(res => res.json())
-			.then(({ todo }) => todo.deletedCount > 0)
-			.catch(err => console.log('ERROR DELETE TODO: ', err));
+		// needed try catch block for jest for some reason when mocking delete function index.test.js line 114
+		let deleteSuccessful = false;
+		try {
+			deleteSuccessful = await fetch('/api/todos/delete', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					_id: id,
+				}),
+			})
+				.then(res => res.json())
+				.then(({ todo }) => todo.deletedCount > 0)
+				.catch(err => console.log('ERROR DELETE TODO: ', err));
+		} catch (err) {
+			console.log(err);
+		}
 
 		// console.log('DELETE SUCCESFUL: ', deleteSuccessful);
 		if (deleteSuccessful) {
@@ -210,10 +219,14 @@ export default function Home({ todos, error = false }) {
 		<Page title={'Just like Paper'} bg={'white'} bgImage={'/paper.jpg'}>
 			<Center flexDir={'column'} h='100%' mt={10} mb={20}>
 				<Heading textAlign={'center'} mb={10}>
-					Paper. {editModeIndex}
+					Paper.
 				</Heading>
 				{error && (
-					<Alert status={'error'} message={'Something went wrong.'} />
+					<Alert
+						data-testid={'alert-error'}
+						status={'error'}
+						message={'Something went wrong.'}
+					/>
 				)}
 				{!error && (
 					<VStack
@@ -232,6 +245,7 @@ export default function Home({ todos, error = false }) {
 							_hover={{ bg: 'gray.300' }}>
 							<Input
 								id={'input-new-todo'}
+								data-testid={'input-new-todo'}
 								ref={inputNewRef}
 								isInvalid={newTodoError}
 								placeholder='New todo'
@@ -253,7 +267,8 @@ export default function Home({ todos, error = false }) {
 								_hover={{ bg: 'gray.300' }}>
 								{editModeIndex === todo._id ? (
 									<Input
-										id={todo._id}
+										id={`input-edit-${todo._id}`}
+										data-testid={`input-edit-${todo._id}`}
 										ref={inputEditRef}
 										isInvalid={editTodoError}
 										h={'150%'}
@@ -269,6 +284,7 @@ export default function Home({ todos, error = false }) {
 								)}
 								<HStack>
 									<Icon
+										data-testid={`icon-edit-${todo._id}`}
 										onClick={() => toggleEditMode(todo._id)}
 										as={FiEdit}
 										mr={2}
@@ -277,6 +293,7 @@ export default function Home({ todos, error = false }) {
 										color={'gray.400'}
 									/>
 									<Icon
+										data-testid={`icon-delete-${todo._id}`}
 										onClick={() =>
 											handleDeleteTodo(todo._id)
 										}
