@@ -172,18 +172,24 @@ export default function Home({ todos, error = false }) {
 	};
 
 	const handleDeleteTodo = async id => {
-		const deleteSuccessful = await fetch('/api/todos/delete', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				_id: id,
-			}),
-		})
-			.then(res => res.json())
-			.then(({ todo }) => todo.deletedCount > 0)
-			.catch(err => console.log('ERROR DELETE TODO: ', err));
+		// needed try catch block for jest for some reason when mocking delete function index.test.js line 114
+		let deleteSuccessful = false;
+		try {
+			deleteSuccessful = await fetch('/api/todos/delete', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					_id: id,
+				}),
+			})
+				.then(res => res.json())
+				.then(({ todo }) => todo.deletedCount > 0)
+				.catch(err => console.log('ERROR DELETE TODO: ', err));
+		} catch (err) {
+			console.log(err);
+		}
 
 		// console.log('DELETE SUCCESFUL: ', deleteSuccessful);
 		if (deleteSuccessful) {
