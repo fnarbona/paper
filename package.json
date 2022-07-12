@@ -7,7 +7,8 @@
 		"test": "jest",
 		"test:watch": "jest --watch",
 		"test:coverage": "jest --coverage",
-		"test:coverage-watch": "jest --coverage --watch"
+		"test:coverage-watch": "jest --coverage --watch",
+		"cypress": "cypress open"
 	},
 	"dependencies": {
 		"@chakra-ui/react": "^1.8.8",
@@ -25,6 +26,7 @@
 	"devDependencies": {
 		"@testing-library/jest-dom": "^5.16.4",
 		"@testing-library/react": "<=12.1.5",
+		"cypress": "^10.3.0",
 		"jest": "^28.1.2",
 		"jest-environment-jsdom": "^28.1.2"
 	}
